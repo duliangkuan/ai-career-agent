@@ -1,0 +1,6 @@
+import {env} from 'cloudflare:workers';
+export const runtime=env as unknown as {DB:D1Database;DEEPSEEK_API_KEY?:string;DEEPSEEK_MODEL?:string;TEXTIN_APP_ID?:string;TEXTIN_SECRET_CODE?:string;DATA_IMPORT_TOKEN?:string;ALLOW_SHARED_KEYS?:string};
+export function checkOrigin(req:Request){const origin=req.headers.get('origin');if(origin&&origin!==new URL(req.url).origin)throw new Error('请求来源不允许');}
+export async function boundedBody(req:Request,max:number){if(Number(req.headers.get('content-length')||0)>max)throw new Error('上传内容过大');const reader=req.body?.getReader();if(!reader)throw new Error('内容为空');const chunks:Uint8Array[]=[];let size=0;while(true){const {done,value}=await reader.read();if(done)break;size+=value.length;if(size>max){await reader.cancel();throw new Error('上传内容过大');}chunks.push(value);}const bytes=new Uint8Array(size);let n=0;for(const c of chunks){bytes.set(c,n);n+=c.length;}return bytes;}
+export function errorResponse(e:unknown,status=400){return Response.json({error:e instanceof Error?e.message:'处理失败，请重试'},{status,headers:{'Cache-Control':'no-store'}});}
+export function sharedAllowed(req:Request){return runtime.ALLOW_SHARED_KEYS==='true'&&Boolean(req.headers.get('oai-authenticated-user-id'));}

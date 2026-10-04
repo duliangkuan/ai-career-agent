@@ -1,0 +1,3 @@
+import {boundedBody,checkOrigin,errorResponse,runtime,sharedAllowed} from '../../../../lib/server';
+import {textin} from '../../../../lib/providers';
+export async function POST(req:Request){try{checkOrigin(req);const bytes=await boundedBody(req,10*1024*1024);const allowed=sharedAllowed(req);const appId=req.headers.get('x-textin-app-id')||(allowed?runtime.TEXTIN_APP_ID:'')||'';const secret=req.headers.get('x-textin-secret-code')||(allowed?runtime.TEXTIN_SECRET_CODE:'')||'';return Response.json({text:await textin(bytes,appId,secret,req.signal),notice:'最多识别前 10 页，请核对内容是否完整。'},{headers:{'Cache-Control':'no-store'}});}catch(e){return errorResponse(e);}}
